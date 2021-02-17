@@ -3,7 +3,7 @@ module Main exposing (..)
 import Browser
 import Html exposing (Html, button, div, fieldset, form, input, legend, text)
 import Html.Attributes exposing (class, id, placeholder, type_, value)
-import Html.Events exposing (onClick)
+import Html.Events exposing (onClick, onInput)
 
 
 main : Program () Model Msg
@@ -30,14 +30,18 @@ afficheFloat valeur =
 
 
 type alias Model =
-    { hauteurPoteaux : MFloat
-    , portee : MFloat
-    , entraxePortiques : MFloat
+    { hauteurPoteaux : Maybe Float
+    , portee : Maybe Float
+    , entraxePortiques : Maybe Float
+    , volume : Maybe Float
     }
 
 
 type Msg
-    = SoumettreGeometrie Float Float Float
+    = SoumettreGeometrie
+    | ChangeHaut String
+    | ChangePort String
+    | ChangeEntr String
 
 
 init : Model
@@ -45,24 +49,36 @@ init =
     { hauteurPoteaux = Nothing
     , portee = Nothing
     , entraxePortiques = Nothing
+    , volume = Nothing
     }
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        SoumettreGeometrie hp p ep ->
-            { model | hauteurPoteaux = Just hp, portee = Just p, entraxePortiques = Just ep }
+        SoumettreGeometrie ->
+            { model | volume = Nothing }
+
+        ChangeHaut newvalue ->
+            { model | hauteurPoteaux = String.toFloat newvalue }
+
+        ChangePort newvalue ->
+            { model | portee = String.toFloat newvalue }
+
+        ChangeEntr newvalue ->
+            { model | entraxePortiques = String.toFloat newvalue }
+
+
 
 
 view : Model -> Html Msg
 view model =
     div [ class "container-fluid" ]
         [ div []
-            [ input [ type_ "number", id "hauteur-poteau", placeholder "Hauteur du poteau (m)", value (afficheFloat model.hauteurPoteaux) ] []
-            , input [ type_ "number", id "portee", placeholder "Portée (m)", value (afficheFloat model.portee) ] []
-            , input [ type_ "number", id "entraxe-portiques", placeholder "Entraxe portiques (m)", value (afficheFloat model.entraxePortiques) ] []
-            , button [ onClick (SoumettreGeometrie 10 4 5) ] [ text "Valider" ]
+            [ input [ id "hauteur-poteau", placeholder "Hauteur du poteau (m)", value (afficheFloat model.hauteurPoteaux), onInput ChangeHaut ] []
+            , input [ id "portee", placeholder "Portée (m)", value (afficheFloat model.portee), onInput ChangePort ] []
+            , input [ id "entraxe-portiques", placeholder "Entraxe portiques (m)", value (afficheFloat model.entraxePortiques), onInput ChangeEntr ] []
+            , button [ onClick (SoumettreGeometrie ) ] [ text "Valider" ]
             ]
         , fieldset []
             [ legend [] [ text "Résumé" ]
@@ -81,5 +97,6 @@ view model =
             ]
         ]
 
--- juste un commentaire
 
+
+-- juste un commentaire
