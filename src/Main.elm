@@ -1,7 +1,7 @@
 module Main exposing (..)
 
 import Browser
-import Html exposing (Html, button, div, fieldset, form, h3, h4, input, legend, text)
+import Html exposing (Html, button, div, fieldset, h3, h4, input, legend, text)
 import Html.Attributes exposing (class, hidden, id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 
@@ -29,8 +29,8 @@ afficheFloat valeur =
             String.fromFloat f
 
 
-afficheDistance : String -> Maybe Float -> String
-afficheDistance unite distance =
+afficheAvecUnite : String -> Maybe Float -> String
+afficheAvecUnite unite distance =
     case distance of
         Nothing ->
             ""
@@ -40,14 +40,17 @@ afficheDistance unite distance =
 
 
 type Etape
-    = Debut
-    | Geometrie
+    = Geometrie
+    | Charges
+    | Fin
 
 
 type alias Model =
     { hauteurPoteaux : MFloat
     , portee : MFloat
     , entraxePortiques : MFloat
+    , poidsCouverture : MFloat
+    , poidsDivers : MFloat
     , etape : Etape
     }
 
@@ -56,7 +59,11 @@ type Msg
     = ModifierHauteurPoteaux String
     | ModifierPortee String
     | ModifierEntraxePortiques String
+    | ModifierPoidsCouverture String
+    | ModifierPoidsDivers String
+    | RevenirAuDebut
     | SoumettreGeometrie
+    | SoumettreCharges
 
 
 init : Model
@@ -64,7 +71,9 @@ init =
     { hauteurPoteaux = Nothing
     , portee = Nothing
     , entraxePortiques = Nothing
-    , etape = Debut
+    , poidsCouverture = Nothing
+    , poidsDivers = Nothing
+    , etape = Geometrie
     }
 
 
@@ -80,21 +89,39 @@ update msg model =
         ModifierEntraxePortiques valeur ->
             { model | entraxePortiques = String.toFloat valeur }
 
-        SoumettreGeometrie ->
+        ModifierPoidsCouverture valeur ->
+            { model | poidsCouverture = String.toFloat valeur }
+
+        ModifierPoidsDivers valeur ->
+            { model | poidsDivers = String.toFloat valeur }
+
+        RevenirAuDebut ->
             { model | etape = Geometrie }
+
+        SoumettreGeometrie ->
+            { model | etape = Charges }
+
+        SoumettreCharges ->
+            { model | etape = Fin }
 
 
 view : Model -> Html Msg
 view model =
     div [ class "container-fluid" ]
-        [ viewFormGeometrie model
+        [ viewFormGeometrie model (model.etape == Geometrie)
+        , viewFormCharges model (model.etape == Charges)
+        , div [ hidden (model.etape /= Fin) ]
+            [ text "Fin"
+            , button [ onClick RevenirAuDebut ] [ text "Revenir au début" ]
+            , button [ onClick SoumettreGeometrie ] [ text "Précédent" ]
+            ]
         , viewResume model
         ]
 
 
-viewFormGeometrie : Model -> Html Msg
-viewFormGeometrie model =
-    div []
+viewFormGeometrie : Model -> Show -> Html Msg
+viewFormGeometrie model show =
+    div [ hidden (not show) ]
         [ h3 [] [ text "Geometrie" ]
         , div []
             [ input
@@ -127,7 +154,42 @@ viewFormGeometrie model =
                 []
             ]
         , div []
-            [ button [ onClick SoumettreGeometrie ] [ text "Valider" ]
+            [ button [ onClick SoumettreGeometrie ] [ text "Suivant" ]
+            ]
+        ]
+
+
+type alias Show =
+    Bool
+
+
+viewFormCharges : Model -> Show -> Html Msg
+viewFormCharges model show =
+    div [ hidden (not show) ]
+        [ h3 [] [ text "Charges" ]
+        , div []
+            [ input
+                [ type_ "number"
+                , id "poids-couverture"
+                , placeholder "Poids propre couverture (kg/m2)"
+                , value (afficheFloat model.poidsCouverture)
+                , onInput ModifierPoidsCouverture
+                ]
+                []
+            ]
+        , div []
+            [ input
+                [ type_ "number"
+                , id "poids-divers"
+                , placeholder "Poids propre divers sous couverture (kg/m2)"
+                , value (afficheFloat model.poidsDivers)
+                , onInput ModifierPoidsDivers
+                ]
+                []
+            ]
+        , div []
+            [ button [ onClick RevenirAuDebut ] [ text "Précédent" ]
+            , button [ onClick SoumettreCharges ] [ text "Suivant" ]
             ]
         ]
 
@@ -136,19 +198,30 @@ viewResume : Model -> Html Msg
 viewResume model =
     fieldset []
         [ legend [] [ text "Résumé" ]
-        , div [ hidden (model.etape /= Geometrie) ]
+        , div [ hidden (model.etape == Geometrie) ]
             [ h4 [] [ text "Géométrie" ]
             , div []
                 [ text "Hauteur du poteau : "
-                , text (afficheDistance "m" model.hauteurPoteaux)
+                , text (afficheAvecUnite "m" model.hauteurPoteaux)
                 ]
             , div []
                 [ text "Portée : "
-                , text (afficheDistance "m" model.portee)
+                , text (afficheAvecUnite "m" model.portee)
                 ]
             , div []
                 [ text "Entraxe portiques : "
-                , text (afficheDistance "m" model.entraxePortiques)
+                , text (afficheAvecUnite "m" model.entraxePortiques)
+                ]
+            ]
+        , div [ hidden (List.member model.etape [ Geometrie, Charges ]) ]
+            [ h4 [] [ text "Charges" ]
+            , div []
+                [ text "Poids propre couverture"
+                , text (afficheAvecUnite "kg/m2" model.poidsCouverture)
+                ]
+            , div []
+                [ text "Poids propre divers sous toiture : "
+                , text (afficheAvecUnite "kg/m2" model.poidsDivers)
                 ]
             ]
         ]
