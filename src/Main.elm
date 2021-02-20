@@ -1,7 +1,7 @@
 module Main exposing (..)
 
 import Browser
-import Html exposing (Html, button, div, fieldset, form, h4, input, legend, text)
+import Html exposing (Html, button, div, fieldset, form, h3, h4, input, legend, text)
 import Html.Attributes exposing (class, hidden, id, placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 
@@ -87,7 +87,16 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div [ class "container-fluid" ]
-        [ div []
+        [ viewFormGeometrie model
+        , viewResume model
+        ]
+
+
+viewFormGeometrie : Model -> Html Msg
+viewFormGeometrie model =
+    div []
+        [ h3 [] [ text "Geometrie" ]
+        , div []
             [ input
                 [ type_ "number"
                 , id "hauteur-poteau"
@@ -96,7 +105,9 @@ view model =
                 , onInput ModifierHauteurPoteaux
                 ]
                 []
-            , input
+            ]
+        , div []
+            [ input
                 [ type_ "number"
                 , id "portee"
                 , placeholder "Portée (m)"
@@ -104,7 +115,9 @@ view model =
                 , onInput ModifierPortee
                 ]
                 []
-            , input
+            ]
+        , div []
+            [ input
                 [ type_ "number"
                 , id "entraxe-portiques"
                 , placeholder "Entraxe portiques (m)"
@@ -112,24 +125,30 @@ view model =
                 , onInput ModifierEntraxePortiques
                 ]
                 []
-            , button [ onClick SoumettreGeometrie ] [ text "Valider" ]
             ]
-        , fieldset []
-            [ legend [] [ text "Résumé" ]
-            , div [ hidden (model.etape /= Geometrie) ]
-                [ h4 [] [ text "Géométrie" ]
-                , div []
-                    [ text "Hauteur du poteau : "
-                    , text (afficheDistance "m" model.hauteurPoteaux)
-                    ]
-                , div []
-                    [ text "Portée : "
-                    , text (afficheDistance "m" model.portee)
-                    ]
-                , div []
-                    [ text "Entraxe portiques : "
-                    , text (afficheDistance "m" model.entraxePortiques)
-                    ]
+        , div []
+            [ button [ onClick SoumettreGeometrie ] [ text "Valider" ]
+            ]
+        ]
+
+
+viewResume : Model -> Html Msg
+viewResume model =
+    fieldset []
+        [ legend [] [ text "Résumé" ]
+        , div [ hidden (model.etape /= Geometrie) ]
+            [ h4 [] [ text "Géométrie" ]
+            , div []
+                [ text "Hauteur du poteau : "
+                , text (afficheDistance "m" model.hauteurPoteaux)
+                ]
+            , div []
+                [ text "Portée : "
+                , text (afficheDistance "m" model.portee)
+                ]
+            , div []
+                [ text "Entraxe portiques : "
+                , text (afficheDistance "m" model.entraxePortiques)
                 ]
             ]
         ]
