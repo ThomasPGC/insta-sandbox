@@ -1,9 +1,9 @@
 module Main exposing (..)
 
 import Browser
-import Html exposing (Html, button, div, fieldset, form, input, legend, text)
-import Html.Attributes exposing (class, id, placeholder, type_, value)
-import Html.Events exposing (onClick)
+import Html exposing (Html, button, div, fieldset, form, h4, input, legend, text)
+import Html.Attributes exposing (class, hidden, id, placeholder, type_, value)
+import Html.Events exposing (onClick, onInput)
 
 
 main : Program () Model Msg
@@ -29,15 +29,34 @@ afficheFloat valeur =
             String.fromFloat f
 
 
+afficheDistance : String -> Maybe Float -> String
+afficheDistance unite distance =
+    case distance of
+        Nothing ->
+            ""
+
+        Just valeur ->
+            String.fromFloat valeur ++ unite
+
+
+type Etape
+    = Debut
+    | Geometrie
+
+
 type alias Model =
     { hauteurPoteaux : MFloat
     , portee : MFloat
     , entraxePortiques : MFloat
+    , etape : Etape
     }
 
 
 type Msg
-    = SoumettreGeometrie Float Float Float
+    = ModifierHauteurPoteaux String
+    | ModifierPortee String
+    | ModifierEntraxePortiques String
+    | SoumettreGeometrie
 
 
 init : Model
@@ -45,38 +64,72 @@ init =
     { hauteurPoteaux = Nothing
     , portee = Nothing
     , entraxePortiques = Nothing
+    , etape = Debut
     }
 
 
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        SoumettreGeometrie hp p ep ->
-            { model | hauteurPoteaux = Just hp, portee = Just p, entraxePortiques = Just ep }
+        ModifierHauteurPoteaux valeur ->
+            { model | hauteurPoteaux = String.toFloat valeur }
+
+        ModifierPortee valeur ->
+            { model | portee = String.toFloat valeur }
+
+        ModifierEntraxePortiques valeur ->
+            { model | entraxePortiques = String.toFloat valeur }
+
+        SoumettreGeometrie ->
+            { model | etape = Geometrie }
 
 
 view : Model -> Html Msg
 view model =
     div [ class "container-fluid" ]
         [ div []
-            [ input [ type_ "number", id "hauteur-poteau", placeholder "Hauteur du poteau (m)", value (afficheFloat model.hauteurPoteaux) ] []
-            , input [ type_ "number", id "portee", placeholder "Portée (m)", value (afficheFloat model.portee) ] []
-            , input [ type_ "number", id "entraxe-portiques", placeholder "Entraxe portiques (m)", value (afficheFloat model.entraxePortiques) ] []
-            , button [ onClick (SoumettreGeometrie 10 4 5) ] [ text "Valider" ]
+            [ input
+                [ type_ "number"
+                , id "hauteur-poteau"
+                , placeholder "Hauteur du poteau (m)"
+                , value (afficheFloat model.hauteurPoteaux)
+                , onInput ModifierHauteurPoteaux
+                ]
+                []
+            , input
+                [ type_ "number"
+                , id "portee"
+                , placeholder "Portée (m)"
+                , value (afficheFloat model.portee)
+                , onInput ModifierPortee
+                ]
+                []
+            , input
+                [ type_ "number"
+                , id "entraxe-portiques"
+                , placeholder "Entraxe portiques (m)"
+                , value (afficheFloat model.entraxePortiques)
+                , onInput ModifierEntraxePortiques
+                ]
+                []
+            , button [ onClick SoumettreGeometrie ] [ text "Valider" ]
             ]
         , fieldset []
             [ legend [] [ text "Résumé" ]
-            , div []
-                [ text "Hauteur du poteau :"
-                , text (afficheFloat model.hauteurPoteaux)
-                ]
-            , div []
-                [ text "Portée :"
-                , text (afficheFloat model.portee)
-                ]
-            , div []
-                [ text "Entraxe portiques :"
-                , text (afficheFloat model.entraxePortiques)
+            , div [ hidden (model.etape /= Geometrie) ]
+                [ h4 [] [ text "Géométrie" ]
+                , div []
+                    [ text "Hauteur du poteau : "
+                    , text (afficheDistance "m" model.hauteurPoteaux)
+                    ]
+                , div []
+                    [ text "Portée : "
+                    , text (afficheDistance "m" model.portee)
+                    ]
+                , div []
+                    [ text "Entraxe portiques : "
+                    , text (afficheDistance "m" model.entraxePortiques)
+                    ]
                 ]
             ]
         ]
